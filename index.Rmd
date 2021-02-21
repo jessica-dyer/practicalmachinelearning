@@ -5,26 +5,96 @@ date: "2/21/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, echo=TRUE, warning=FALSE, message=FALSE}
+packages <- c("dplyr", "ggplot2", "tidyverse", "caret", 
+              "Hmisc", "tibble", "kableExtra", "here", "gtsummary", 
+              "lubridate", "stringr", "readr", "utils", "naniar")
+
+new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+
+if(length(new.packages)) install.packages(new.packages)
+
+# Load packages
+invisible(lapply(packages, library, character.only = TRUE))
+
+train_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+  
+test_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+train <- read.csv(train_url)
+# test <- read.csv(test_url)
 ```
 
-## R Markdown
+## Executive summary
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+https://rpubs.com/jsardinha/PML_JHU_PeerAssessment_01
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Introduction 
 
-```{r cars}
-summary(cars)
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, our goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+## Methods
+
+1. load data
+2. set seed and split data
+3. Google which accelerometer data best predicts quality of movement? 
+
+
+```{r}
+# SPLIT THE DATA INTO TRAINING AND TESTING USING `createDataPartition`
+
+set.seed(43929)
+in_train <- createDataPartition(y = train$classe, 
+                                p = .70, 
+                                list = FALSE)
+
+train <- train[in_train, ]
+
+dim(train)
+
+#test <- data[-in_train, ]
+
 ```
 
-## Including Plots
+### Removing coviariates 
 
-You can also embed plots, for example:
+Some variables have no variability. This dataset has 160 variables, so in order to quickly remove some of these variables, we looked at which variables is a near zero variance predictor. We will remove these variables from our training dataset.  
+```{r}
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+nzv <- nearZeroVar(train, saveMetrics = TRUE)
+
+nzv_vars <- 
+  nzv %>% filter(nzv == "TRUE")
+  
+remove_vars <- row.names(nzv_vars)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We removed `r length(nzv_vars)` variables as possible predictors with this method. 
+- note: do we want them to be removed completely? Or just not included as a potential predictor? 
+
+```{r}
+
+train <- train[, !names(train) %in% remove_vars]
+
+```
+
+Next I want to look at which variables have the most correlation with the outcome `classe`
+
+Examine missingness 
+
+```{r}
+n_var_miss(train)
+
+vis_miss(train, 
+         warn_large_data = FALSE)
+
+
+gg_miss_var(train)
+library(rattle)
+fancyRpartPlot
+# mod_fit <- train(classe ~ ., method = "rpart", data = train)
+```
+
+## Results 
+
+## Conclusion 
