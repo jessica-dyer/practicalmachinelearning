@@ -2,13 +2,13 @@
 title: "Practical Machine Learning Course Project"
 author: "Jessica Dyer"
 date: "2/21/2021"
-output: html_document
+output: rmdformats::material
 ---
 
-```{r setup, echo=TRUE, warning=FALSE, message=FALSE}
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
 packages <- c("dplyr", "ggplot2", "tidyverse", "caret", 
               "Hmisc", "tibble", "kableExtra", "here", "gtsummary", 
-              "lubridate", "stringr", "readr", "utils", "naniar")
+              "lubridate", "stringr", "readr", "utils", "naniar", "rmdformats")
 
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
 
@@ -25,14 +25,15 @@ train <- read.csv(train_url)
 # test <- read.csv(test_url)
 ```
 
-(Link to Github Pages)[https://jessica-dyer.github.io/practicalmachinelearning/]
-## Executive summary
+# Executive summary
 
-## Introduction 
+# Introduction 
+[Link to Github Pages](https://jessica-dyer.github.io/practicalmachinelearning/)  
+
 
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, our goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
 
-## Methods
+# Methods
 
 1. load data
 2. set seed and split data
@@ -55,7 +56,7 @@ dim(train)
 
 ```
 
-### Removing coviariates 
+## Removing coviariates 
 
 Some variables have no variability. This dataset has 160 variables, so in order to quickly remove some of these variables, we looked at which variables is a near zero variance predictor. We will remove these variables from our training dataset.  
 ```{r}
@@ -94,6 +95,6 @@ fancyRpartPlot
 # mod_fit <- train(classe ~ ., method = "rpart", data = train)
 ```
 
-## Results 
+# Results 
 
-## Conclusion 
+# Conclusion 
