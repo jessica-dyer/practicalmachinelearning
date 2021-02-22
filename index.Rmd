@@ -25,9 +25,8 @@ train <- read.csv(train_url)
 # test <- read.csv(test_url)
 ```
 
+(Link to Github Pages)[https://jessica-dyer.github.io/practicalmachinelearning/]
 ## Executive summary
-
-https://rpubs.com/jsardinha/PML_JHU_PeerAssessment_01
 
 ## Introduction 
 
