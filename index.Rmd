@@ -8,7 +8,8 @@ output: rmdformats::material
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
 packages <- c("dplyr", "ggplot2", "tidyverse", "caret", 
               "Hmisc", "tibble", "kableExtra", "here", "gtsummary", 
-              "lubridate", "stringr", "readr", "utils", "naniar", "rmdformats")
+              "lubridate", "stringr", "readr", "utils", "naniar", "rmdformats", 
+              "rattle")
 
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
 
@@ -30,12 +31,11 @@ train <- read.csv(train_url)
 # Introduction 
 [Link to Github Pages](https://jessica-dyer.github.io/practicalmachinelearning/)  
 
-
-Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, our goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, our goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website [here](http://groupware.les.inf.puc-rio.br/har), (see the section on the Weight Lifting Exercise Dataset). 
 
 # Methods
 
-1. load data
+1. Load data
 2. set seed and split data
 3. Google which accelerometer data best predicts quality of movement? 
 
@@ -60,7 +60,6 @@ dim(train)
 
 Some variables have no variability. This dataset has 160 variables, so in order to quickly remove some of these variables, we looked at which variables is a near zero variance predictor. We will remove these variables from our training dataset.  
 ```{r}
-
 nzv <- nearZeroVar(train, saveMetrics = TRUE)
 
 nzv_vars <- 
@@ -88,11 +87,16 @@ n_var_miss(train)
 vis_miss(train, 
          warn_large_data = FALSE)
 
+missing <- gg_miss_var(train)
+df <- data.frame(missing$data$variable, missing$data$n_miss)
+df <- df %>%
+  filter(missing.data.n_miss > 0)
+remove_vars <- df$missing.data.variable
 
-gg_miss_var(train)
-library(rattle)
-fancyRpartPlot
-# mod_fit <- train(classe ~ ., method = "rpart", data = train)
+train <- 
+  train %>% 
+  select(!(remove_vars))
+
 ```
 
 # Results 
