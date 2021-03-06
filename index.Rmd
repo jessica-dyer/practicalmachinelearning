@@ -9,7 +9,7 @@ output: rmdformats::material
 packages <- c("dplyr", "ggplot2", "tidyverse", "caret", 
               "Hmisc", "tibble", "kableExtra", "here", "gtsummary", 
               "lubridate", "stringr", "readr", "utils", "naniar", "rmdformats", 
-              "rattle")
+              "rattle", "rpart")
 
 new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
 
@@ -24,6 +24,10 @@ test_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
 
 train <- read.csv(train_url)
 test <- read.csv(test_url)
+
+## FACTOR OUT CLASSE VARIABLE
+train$classe <- factor(train$classe, 
+                          levels = c("A", "B", "C", "D", "E"))
 ```
 
 # Executive summary
@@ -43,12 +47,11 @@ Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible t
 # SPLIT THE DATA INTO TRAINING AND TESTING USING `createDataPartition`
 set.seed(43929)
 in_train <- createDataPartition(y = train$classe, 
-                                p = .30, 
+                                p = .70, 
                                 list = FALSE)
 
 training <- train[in_train, ]
-cross_val <- train[-in_train, ]
-
+testing <- train[-in_train, ]
 ```
 
 ## Removing coviariates 
@@ -91,65 +94,76 @@ training <-
 ```
 * There are `r length(remove_vars2)` variables in the training dataset with close to 100% missingness.
 
-## Remove variables from cross validation and test
+## Remove variables from cross validation and test datasets 
 ```{r}
 remove <- c(remove_vars, remove_vars2)
 
-cross_val <- cross_val[, !names(cross_val) %in% remove]
-test <- test[, !names(test) %in% remove]
+testing <- testing[, !names(testing) %in% remove]
 ```
 
 
-## Exploratory data analysis 
+## Coerce all data to same type 
 
 ```{r}
+for (i in 1:length(testing) ) {
+        for(j in 1:length(training)) {
+        if( length( grep(names(training[i]), names(testing)[j]) ) ==1)  {
+            class(testing[j]) <- class(training[i])
+        }      
+    }      
+}
+
 
 ```
 
 # Model building 
 
-**Model 1: Random Forest Model**
+## Model 1: Random Forest Model
 ```{r}
-library(doParallel)
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-
 set.seed(2938)
 
-fit_rf <- train(classe ~ ., data=training, method="rf", prox=TRUE)
+#fit_rf <- train(classe ~ ., data=training, method="rf", prox=TRUE)
+fit_rf2 <- rpart(classe ~ ., data=training, method="class")
+
+fancyRpartPlot(fit_rf2)
+
 ```
 
-## Model 2
+## Model 2: Stochastic Gradient Boosting (gbm) 
 ```{r}
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-
 set.seed(2938)
 modelFit_gbm <- train(classe ~ ., method="gbm", data=training, verbose=FALSE)
+
 ```
 
-## Model 3
+## Model 3: Support Vector Machines (SVM)
 
 ```{r}
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-
 set.seed(112)
 modelFit_svm <- train(classe ~ ., data=training, method="svmRadial", preProc = c("center", "scale"), metric = "Accuracy")
+
 ```
-## Model 4
-```{r}
-# Enabeling multi-core processing
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-
-# Random Forest with PCA
-set.seed(112)
-modelFit_rf_PCA <- train(classe ~ ., data=training, method="rf",preProcess = "pca", prox=TRUE)
-```
-
-
 
 # Results 
+```{r}
+predictions_1 <- predict(fit_rf2, testing, type = "class")
+confusionMatrix(predictions_1, testing$classe)
+
+predictions_2 <- predict(modelFit_gbm, testing, type = "prob")
+confusionMatrix(predictions_2, testing$classe)
+
+
+
+modelFit_gbm
+modelFit_svm
+
+
+
+predictions_1 <- predict(fit_rf2, testing, type = class)
+confusionMatrix(testing$classe, predict(fit_rf2, testing))
+confusionMatrix(cross_val$classe, predict(modelFit_gbm, cross_val))
+
+```
+
 
 # Conclusion 
